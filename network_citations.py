@@ -93,7 +93,7 @@ def authors_weights(sc):
 	stage1 = stage1.reduceByKey(lambda a, b : a+b)
 
 	#now divide this weight by number of papers for this author
-	papersMap.destroy()
+	papersMap.unpersist()
 	#author_id , number of papers published
 	paa2 = paa.map(lambda paa: (paa[1], 1))
 	paa2 = paa2.reduceByKey(lambda a1, a2: a1+a2)
@@ -189,8 +189,8 @@ if __name__ == "__main__":
 	#cited_papers.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_with_nb_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#step4 give authors weight based on number of citations they got on each paper
-	#author_feature = authors_weights(sc)
-	#author_feature = author_feature.map(lambda f: (f[0],'\t'.join([f[1], f[2], f[3]])))
+	author_feature = authors_weights(sc)
+	author_feature = author_feature.map(lambda f: (f[0],'\t'.join([f[1], f[2], f[3]])))
 	#author_feature.saveAsHadoopFile('/user/bd-ss16-g3/data/authors_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#step5 give affiliations weight based on number of citations 
