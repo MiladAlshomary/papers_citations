@@ -105,7 +105,7 @@ def affiliations_weights(sc):
 	papers = papers.map(lambda p: (p[0], p[11]))
 	papers = papers.filter(lambda p: p[1] != '0')
 
-	paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
+	paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[2] != '')
 	#author_id & 1 for the paper he/she is in
 	paa = paa.map(lambda l : (l[0], l[2], 1));
 
