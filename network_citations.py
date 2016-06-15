@@ -90,23 +90,13 @@ def authors_weights(sc):
 
 
 	stage1 = paa1.mapPartitions(mapFunc1, preservesPartitioning=True)
+	
 	stage1 = stage1.reduceByKey(lambda a, b : a+b)
 
-	#now divide this weight by number of papers for this author
-	papersMap.unpersist()
-	#author_id , number of papers published
-	paa2 = paa.map(lambda paa: (paa[1], 1))
-	paa2 = paa2.reduceByKey(lambda a1, a2: a1+a2)
-	author_nb_papers_map = sc.broadcast(paa2.collectAsMap())
+	result = stage1.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
+	result = result.map(lambda item: (item[0], item[1][0]/item[1][1]))
 
-	rowFunc2 = lambda x: (x[0],x[1], float(author_nb_papers_map.value.get(x[0], 1)),float(x[1])/float(author_nb_papers_map.value.get(x[0], 1)))
-	def mapFunc2(partition):
-		for row in partition:
-			yield rowFunc2(row)
-
-	stage2 = stage1.mapPartitions(mapFunc2, preservesPartitioning=True)
-
-	return stage2
+	return result
 
 def affiliations_weights(sc):
 	papers = sc.textFile("/user/bd-ss16-g3/data/papers_with_nb_citations")
@@ -134,7 +124,7 @@ def affiliations_weights(sc):
 	return result
 
 def conf_weights(sc):
-	papers    = sc.textFile("/user/bd-ss16-g3/data/papers_2014_with_nb_citations")
+	papers    = sc.textFile("/user/bd-ss16-g3/data/papers_with_nb_citations")
 	papers = papers.map(lambda p : p.split("\t"))
 	#conference_id and number of citations
 	confs = papers.map(lambda p: (p[10], int(p[11])))
@@ -145,7 +135,30 @@ def conf_weights(sc):
 	return confs
 
 def fos_weights(sc):
-	papers    = sc.textFile("/user/bd-ss16-g3/data/papers_2014_with_nb_citations")
+	papers    = sc.textFile("/user/bd-ss16-g3/data/papers_with_nb_citations")
+	papers = papers.map(lambda p : p.split("\t"))
+	#paper_id and number of citations
+	papers = papers.map(lambda p: (p[0], p[11]))
+	papers = papers.filter(lambda p: p[1] != '0')
+
+	keywords = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperKeywords.tsv.bz2")
+	keywords = keywords.map(lambda k: k.split("\t"))
+	
+	#join
+	papersMap = sc.broadcast(papers.collectAsMap());
+
+	rowFunc1 = lambda x: (x[2], int(papersMap.value.get(x[0], 0)))
+	def mapFunc1(partition):
+		for row in partition:
+			yield rowFunc1(row)
+
+	fos = keywords.mapPartitions(mapFunc1, preservesPartitioning=True)
+	fos = fos.reduceByKey(lambda a, b : a+b)
+
+	return fos
+
+def convert_papers_to_feature_file(sc):
+	papers    = sc.textFile("/user/bd-ss16-g3/data/papers_with_nb_citations")
 	papers = papers.map(lambda p : p.split("\t"))
 	#paper_id and number of citations
 	papers = papers.map(lambda p: (p[0], p[11]))
