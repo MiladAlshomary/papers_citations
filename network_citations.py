@@ -178,7 +178,27 @@ def get_paa_of(sc, year):
 	return result
 
 def convert_papers_to_feature_file(sc):
-	#step1 adding author weight
+	#step1 conference weight
+	conferences = sc.textFile("/user/bd-ss16-g3/data/confs_citations")
+	conferences = affiliations.map(lambda a : a.split("\t")).filter(lambda a: float(a[1]) > 0).map(lambda a: (a[0], a[1]))
+	
+	conferences_bc = sc.broadcast(conferences.collectAsMap())
+
+	papers = sc.textFile("/user/bd-ss16-g3/data/papers").map(lambda l : l.split("\t"))
+	#paper_id, conf_id
+	papers = papers.map(lambda l : (l[0], l[9]));
+
+	rowFunc1  = lambda x: (x[0], float(conferences_bc.value.get(x[1], 0)))
+	def mapFunc1(partition):
+		for row in partition:
+			yield rowFunc1(row)
+
+	papers_with_conf_weights = papers.mapPartitions(mapFunc1, preservesPartitioning=True)
+	#by now we have for each paper the weight of its authors
+	papers_with_conf_weights.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_conferences_weight', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+
+	#step2 adding author weight
 	authors = sc.textFile("/user/bd-ss16-g3/data/authors_citations")
 	authors = authors.map(lambda a : a.split("\t")).filter(lambda a: float(a[1]) > 0).map(lambda a: (a[0], a[1]))
 	
@@ -198,6 +218,51 @@ def convert_papers_to_feature_file(sc):
 	papers_with_author_weights = papers_with_author_weights.map(lambda item: (item[0], item[1][0]/item[1][1]))
 	#by now we have for each paper the weight of its authors
 	papers_with_author_weights.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_authors_weight', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+
+
+	#step3 affiliation weight
+	affiliations = sc.textFile("/user/bd-ss16-g3/data/affiliation_citations")
+	affiliations = affiliations.map(lambda a : a.split("\t")).filter(lambda a: float(a[1]) > 0).map(lambda a: (a[0], a[1]))
+	
+	affiliations_bc = sc.broadcast(affiliations.collectAsMap())
+
+	paa = sc.textFile("/user/bd-ss16-g3/data/paper_author_affiliation").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
+	#paper_id, affiliation_id
+	paa = paa.map(lambda l : (l[0], l[2]));
+
+	rowFunc1  = lambda x: (x[0], float(authors_bc.value.get(x[1], 0)))
+	def mapFunc1(partition):
+		for row in partition:
+			yield rowFunc1(row)
+
+	papers_with_affiliation_weights = paa.mapPartitions(mapFunc1, preservesPartitioning=True)
+	papers_with_affiliation_weights = papers_with_affiliation_weights.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
+	papers_with_affiliation_weights = papers_with_affiliation_weights.map(lambda item: (item[0], item[1][0]/item[1][1]))
+	#by now we have for each paper the weight of its authors
+	papers_with_affiliation_weights.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_affiliation_weight', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+	#step4 fieldofstudy weight
+	fos = sc.textFile("/user/bd-ss16-g3/data/fos_citations")
+	fos = fos.map(lambda a : a.split("\t")).filter(lambda a: float(a[1]) > 0).map(lambda a: (a[0], a[1]))
+	
+	fos_bc = sc.broadcast(fos.collectAsMap())
+
+	keywords = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperKeywords.tsv.bz2").map(lambda l : l.split("\t"))
+	#paper_id, field_of_study
+	keywords = keywords.map(lambda l : (l[0], l[2]));
+
+	rowFunc1  = lambda x: (x[0], float(authors_bc.value.get(x[1], 0)))
+	def mapFunc1(partition):
+		for row in partition:
+			yield rowFunc1(row)
+
+	papers_with_fos_weights = keywords.mapPartitions(mapFunc1, preservesPartitioning=True)
+	papers_with_fos_weights = papers_with_fos_weights.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
+	papers_with_fos_weights = papers_with_fos_weights.map(lambda item: (item[0], item[1][0]/item[1][1]))
+	#by now we have for each paper the weight of its authors
+	papers_with_fos_weights.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_fosn_weight', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
 
 	
 def extract_features(sc, year):
