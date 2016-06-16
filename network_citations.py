@@ -157,6 +157,26 @@ def fos_weights(sc):
 
 	return fos
 
+def get_paa_of(sc, year):
+	#papers and number of citations per year
+	paas = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2")
+	paas = paas.map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1], c[2], c[3], c[4]))
+
+	papers = get_papers_of(sc, year)
+	papers = papers.map(lambda p: (p[0], 1))
+
+
+	#join
+	papersMap = sc.broadcast(papers.collectAsMap())
+	rowFunc1 = lambda x: (x[0], x[1], x[2], x[3], x[4], papersMap.value.get(x[0], -1))
+	def mapFunc1(partition):
+		for row in partition:
+			yield rowFunc1(row)
+
+	result = paas.mapPartitions(mapFunc1, preservesPartitioning=True)
+	result = result.filter(lambda c: c[5] != -1)
+	return result
+
 def convert_papers_to_feature_file(sc):
 	#step1 adding author weight
 	authors = sc.textFile("/user/bd-ss16-g3/data/authors_citations")
@@ -164,7 +184,7 @@ def convert_papers_to_feature_file(sc):
 	
 	authors_bc = sc.broadcast(authors.collectAsMap())
 
-	paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
+	paa = sc.textFile("/user/bd-ss16-g3/data/paper_author_affiliation").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
 	#paper_id, author_id
 	paa = paa.map(lambda l : (l[0], l[1]));
 
@@ -189,6 +209,11 @@ def extract_features(sc, year):
 	#step2 extract citations on papers of year year
 	citations = get_citations_on_papers_of(year)
 	citations.saveAsHadoopFile('/user/bd-ss16-g3/data/citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+	#step2 extract citations on papers of year year
+	paas = get_paa_of(year)
+	paas = paas.map(lambda line: (line[0], '\t'.join([line[1], line[2], line[3], line[4]])))
+	paas.saveAsHadoopFile('/user/bd-ss16-g3/data/paper_author_affiliation', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#step3 extract number of citations for each paper in the subset
 	cited_papers = nb_citations_per_paper(sc)
