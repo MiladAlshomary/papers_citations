@@ -180,13 +180,13 @@ def get_paa_of(sc, year):
 def convert_papers_to_feature_file(sc):
 	#step1 conference weight
 	conferences = sc.textFile("/user/bd-ss16-g3/data/confs_citations")
-	conferences = affiliations.map(lambda a : a.split("\t")).filter(lambda a: float(a[1]) > 0).map(lambda a: (a[0], a[1]))
+	conferences = conferences.map(lambda a : a.split("\t")).filter(lambda a: float(a[1]) > 0).map(lambda a: (a[0], a[1]))
 	
 	conferences_bc = sc.broadcast(conferences.collectAsMap())
 
 	papers = sc.textFile("/user/bd-ss16-g3/data/papers").map(lambda l : l.split("\t"))
 	#paper_id, conf_id
-	papers = papers.map(lambda l : (l[0], l[9]));
+	papers = papers.map(lambda l : (l[0], l[10]));
 
 	rowFunc1  = lambda x: (x[0], float(conferences_bc.value.get(x[1], 0)))
 	def mapFunc1(partition):
@@ -227,11 +227,11 @@ def convert_papers_to_feature_file(sc):
 	
 	affiliations_bc = sc.broadcast(affiliations.collectAsMap())
 
-	paa = sc.textFile("/user/bd-ss16-g3/data/paper_author_affiliation").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
+	paa = sc.textFile("/user/bd-ss16-g3/data/paper_author_affiliation").map(lambda l : l.split("\t")).filter(lambda a : a[2] != '')
 	#paper_id, affiliation_id
 	paa = paa.map(lambda l : (l[0], l[2]));
 
-	rowFunc1  = lambda x: (x[0], float(authors_bc.value.get(x[1], 0)))
+	rowFunc1  = lambda x: (x[0], float(affiliations_bc.value.get(x[1], 0)))
 	def mapFunc1(partition):
 		for row in partition:
 			yield rowFunc1(row)
@@ -252,7 +252,7 @@ def convert_papers_to_feature_file(sc):
 	#paper_id, field_of_study
 	keywords = keywords.map(lambda l : (l[0], l[2]));
 
-	rowFunc1  = lambda x: (x[0], float(authors_bc.value.get(x[1], 0)))
+	rowFunc1  = lambda x: (x[0], float(fos_bc.value.get(x[1], 0)))
 	def mapFunc1(partition):
 		for row in partition:
 			yield rowFunc1(row)
@@ -264,7 +264,15 @@ def convert_papers_to_feature_file(sc):
 	papers_with_fos_weights.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_fosn_weight', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 
-	
+def merge_features_files(sc):
+	authors = sc.textFile("user/bd-ss16-g3/data/authors_weights").map(lambda line: line.split("\t"))
+	affiliations = sc.textFile("user/bd-ss16-g3/data/affiliations_weights").map(lambda line: line.split("\t"))
+	#fos = sc.textFile("user/bd-ss16-g3/data/fos_weights").map(lambda line: line.split("\t"))	
+	#conferences = sc.textFile("user/bd-ss16-g3/data/conf_weights").map(lambda line: line.split("\t"))
+
+	result = authors.join(affiliations)
+
+
 def extract_features(sc, year):
 	#step1 extract papers of year year
 	papers = get_papers_of(year)
@@ -315,3 +323,7 @@ if __name__ == "__main__":
 	#step2
 	#build feature file
 	convert_papers_to_feature_file(sc)
+
+	#step3
+	#merge featurs files into one
+	merge_features_files(sc)
