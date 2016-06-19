@@ -265,8 +265,8 @@ def convert_papers_to_feature_file(sc):
 
 
 def merge_features_files(sc):
-	authors = sc.textFile("user/bd-ss16-g3/data/authors_weights").map(lambda line: line.split("\t"))
-	affiliations = sc.textFile("user/bd-ss16-g3/data/affiliations_weights").map(lambda line: line.split("\t"))
+	authors = sc.textFile("/user/bd-ss16-g3/data/papers_authors_weight").map(lambda line: line.split("\t"))
+	affiliations = sc.textFile("/user/bd-ss16-g3/data/papers_affiliation_weight").map(lambda line: line.split("\t"))
 	#fos = sc.textFile("user/bd-ss16-g3/data/fos_weights").map(lambda line: line.split("\t"))	
 	#conferences = sc.textFile("user/bd-ss16-g3/data/conf_weights").map(lambda line: line.split("\t"))
 
