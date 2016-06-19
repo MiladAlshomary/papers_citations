@@ -267,18 +267,24 @@ def convert_papers_to_feature_file(sc):
 def merge_features_files(sc):
 
 	papers = sc.textFile("/user/bd-ss16-g3/data/papers_with_nb_citations").map(lambda line: line.split("\t")).map(lambda i: (i[0], float(i[11])))
-	papers = papers.filter(lambda p: p[1] > 0)
+	papers = papers.filter(lambda p: p[1] > 0).map(lambda p: (p[0],p[1]))
+
 
 	authors = sc.textFile("/user/bd-ss16-g3/data/papers_authors_weight").map(lambda line: line.split("\t")).map(lambda i: (i[0], i[1]))
 	affiliations = sc.textFile("/user/bd-ss16-g3/data/papers_affiliation_weight").map(lambda line: line.split("\t")).map(lambda i: (i[0], i[1]))
 	fos = sc.textFile("/user/bd-ss16-g3/data/papers_fosn_weight").map(lambda line: line.split("\t"))	.map(lambda i: (i[0], i[1]))
 	conferences = sc.textFile("/user/bd-ss16-g3/data/papers_conferences_weight").map(lambda line: line.split("\t")).map(lambda i: (i[0], i[1]))
 
-	au_bc = sc.broadcast(authors.collectAsMap())
-	af_bc = sc.broadcast(affiliations.collectAsMap())
-	fs_bc = sc.broadcast(fos.collectAsMap())
-	co_bc = sc.broadcast(conferences.collectAsMap())
+	print("============ 1 ================")
+	stage1 = papers.leftOuterJoin(authors)
+	print("============ 2 ================")
+	stage2 = stage1.leftOuterJoin(affiliations)
+	print("============ 3 ================")
+	stage3 = stage2.leftOuterJoin(conferences)
+	print("============ 4 ================")
+	stage4 = stage3.leftOuterJoin(fos)
 
+	stage4.take(1)
 	#result = authors.join(affiliations)
 	#result.saveAsHadoopFile('/user/bd-ss16-g3/data/features_file', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
