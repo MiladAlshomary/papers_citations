@@ -332,6 +332,10 @@ def learn_model(sc):
 	labeled_points = feature_file.map(lambda f: LabeledPoint(f[1], f[2:]))
 	training, testing = labeled_points.randomSplit([0.7,0.3],11)
 	model = LinearRegressionWithSGD.train(training, iterations=100, step=0.00000001)
+
+	preds = testing.map(lambda p: (p.label, model.predict(p.features)))
+	MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
+	print("MSE = " + str(MSE))
 	return model
 
 if __name__ == "__main__":
