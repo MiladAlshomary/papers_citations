@@ -306,15 +306,16 @@ def extract_features(sc, year):
 	#step5 give authors weight based on number of citations they got on each paper
 	author_feature = authors_weights(sc)
 	author_feature.saveAsHadoopFile('/user/bd-ss16-g3/data/authors_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
-	step5 give affiliations weight based on number of citations 
+	
+	#step6 give affiliations weight based on number of citations 
 	affiliation_feature = affiliations_weights(sc)
 	affiliation_feature.saveAsHadoopFile('/user/bd-ss16-g3/data/affiliation_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 	
-	#step6 give conferences weight based on number of citations
+	#step7 give conferences weight based on number of citations
 	confs = conf_weights(sc)
 	confs.saveAsHadoopFile('/user/bd-ss16-g3/data/confs_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 	
-	#step7 give fos weight based on number of citations
+	#step8 give fos weight based on number of citations
 	fos = fos_weights(sc)
 	fos.saveAsHadoopFile('/user/bd-ss16-g3/data/fos_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
