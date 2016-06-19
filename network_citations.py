@@ -360,4 +360,4 @@ if __name__ == "__main__":
 	#step4
 	#learn a linear model from the feature file
 	model = learn_model(sc)
-	model.save('/user/bd-ss16-g3/data/my_model')
+	model.save(sc,'/user/bd-ss16-g3/data/my_model')
