@@ -284,9 +284,11 @@ def merge_features_files(sc):
 	print("============ 4 ================")
 	stage4 = stage3.leftOuterJoin(fos)
 
-	print("ddddddddddd:" + str(stage4.take(1)))
-	#result = authors.join(affiliations)
-	#result.saveAsHadoopFile('/user/bd-ss16-g3/data/features_file', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	('808B8671', ((((3.0, '2.25'), '19267.0'), '32.0'), '13052.0'))
+
+	#paper_id, nb_citations, fos, conf, aff, author
+	stage4 = stage4.map(lambda p: (p[0],float(p[1][1]), float(p[1][0][1]), float(p[1][0][0][1]), float(p[1][0][0][0][1]), float(p[1][0][0][0][0])))
+	stage4.saveAsHadoopFile('/user/bd-ss16-g3/data/features_file', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 
 def extract_features(sc, year):
