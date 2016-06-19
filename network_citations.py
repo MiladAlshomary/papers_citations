@@ -288,6 +288,7 @@ def merge_features_files(sc):
 
 	#paper_id, nb_citations, fos, conf, aff, author
 	stage4 = stage4.map(lambda p: (p[0],p[1][1], p[1][0][1], p[1][0][0][1], p[1][0][0][0][1], p[1][0][0][0][0]))
+	stage4 = stage4.map(lambda p: (p[0], '\t'.join([p[1],p[2], p[3], p[4], p[5]])))
 	stage4.saveAsHadoopFile('/user/bd-ss16-g3/data/features_file', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 
