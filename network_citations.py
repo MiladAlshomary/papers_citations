@@ -1,7 +1,6 @@
 ## Imports
 from pyspark import SparkConf, SparkContext
-from pyspark.mllib.classification import SVMWithSGD, SVMModel
-from pyspark.mllib.regression import LabeledPoint
+from pyspark.mllib.regression import LabeledPoint, LinearRegressionWithSGD, LinearRegressionModel
 
 ## CONSTANTS
 APP_NAME = "Network Citations"
@@ -332,7 +331,7 @@ def learn_model(sc):
 
 	labeled_points = feature_file.map(lambda f: LabeledPoint(f[1], f[2:]))
 	training, testing = labeled_points.randomSplit([0.7,0.3],11)
-	model = SVMWithSGD.train(training, iterations=100)
+	model = LinearRegressionWithSGD.train(training, iterations=100, step=0.00000001)
 	return model
 
 if __name__ == "__main__":
