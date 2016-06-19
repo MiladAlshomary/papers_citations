@@ -332,8 +332,8 @@ def learn_model(sc):
 
 	labeled_points = feature_file.map(lambda f: LabeledPoint(f[1], f[2:]))
 	training, testing = labeled_points.randomSplit([0.7,0.3],11)
-	model = SVMWithSGD.train(parsedData, iterations=100)
-	model.save('/user/bd-ss16-g3/data/mymodels')
+	model = SVMWithSGD.train(training, iterations=100)
+	return model
 
 if __name__ == "__main__":
 	# Configure OPTIONS
@@ -357,3 +357,4 @@ if __name__ == "__main__":
 	#step4
 	#learn a linear model from the feature file
 	model = learn_model(sc)
+	model.save('/user/bd-ss16-g3/data/my_model')
