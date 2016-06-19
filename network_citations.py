@@ -127,8 +127,8 @@ def conf_weights(sc):
 	papers    = sc.textFile("/user/bd-ss16-g3/data/papers_with_nb_citations")
 	papers = papers.map(lambda p : p.split("\t"))
 	#conference_id and number of citations
-	confs = papers.map(lambda p: (p[10], int(p[11])))
-	confs = confs.filter(lambda p: p[1] != 0)
+	confs = papers.map(lambda p: (p[8].lower(), int(p[11])))
+	confs = confs.filter(lambda p: p[1] != 0 and p[0] != '')
 
 	confs = confs.reduceByKey(lambda a, b : a+b)
 
@@ -271,40 +271,36 @@ def merge_features_files(sc):
 	#conferences = sc.textFile("user/bd-ss16-g3/data/conf_weights").map(lambda line: line.split("\t"))
 
 	result = authors.join(affiliations)
+	result.saveAsHadoopFile('/user/bd-ss16-g3/data/features_file', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 
 def extract_features(sc, year):
 	#step1 extract papers of year year
-	papers = get_papers_of(year)
-	papers = papers.map(lambda line: (line[0], '\t'.join([line[0], line[1], line[2], str(line[3]), line[4], line[5], line[6], line[7], line[8], line[9], line[10]])))
-	papers.saveAsHadoopFile('/user/bd-ss16-g3/data/papers', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	#papers = get_papers_of(sc, year)
+	#papers = papers.map(lambda line: (line[0], '\t'.join([line[0], line[1], line[2], str(line[3]), line[4], line[5], line[6], line[7], line[8], line[9], line[10]])))
+	#papers.saveAsHadoopFile('/user/bd-ss16-g3/data/papers', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+        
+	#step2 extract citations on papers of year year
+	#citations = get_citations_on_papers_of(sc, year)
+	#citations.saveAsHadoopFile('/user/bd-ss16-g3/data/citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#step2 extract citations on papers of year year
-	citations = get_citations_on_papers_of(year)
-	citations.saveAsHadoopFile('/user/bd-ss16-g3/data/citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
-
-	#step2 extract citations on papers of year year
-	paas = get_paa_of(year)
-	paas = paas.map(lambda line: (line[0], '\t'.join([line[1], line[2], line[3], line[4]])))
-	paas.saveAsHadoopFile('/user/bd-ss16-g3/data/paper_author_affiliation', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
-
+	#paas = get_paa_of(sc, year)
+	#paas = paas.map(lambda line: (line[0], '\t'.join([line[1], line[2], line[3], line[4]])))
+	#paas.saveAsHadoopFile('/user/bd-ss16-g3/data/paper_author_affiliation', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 	#step3 extract number of citations for each paper in the subset
-	cited_papers = nb_citations_per_paper(sc)
-	cited_papers = cited_papers.map(lambda p: (p[0],'\t'.join([p[1], p[2], str(p[3]), p[4], p[5], p[6], p[7], p[8], p[9], p[10], str(p[11])])))
-	cited_papers.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_with_nb_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
-
+	#cited_papers = nb_citations_per_paper(sc)
+	#cited_papers = cited_papers.map(lambda p: (p[0],'\t'.join([p[1], p[2], str(p[3]), p[4], p[5], p[6], p[7], p[8], p[9], p[10], str(p[11])])))
+	#cited_papers.saveAsHadoopFile('/user/bd-ss16-g3/data/papers_with_nb_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 	#step4 give authors weight based on number of citations they got on each paper
-	author_feature = authors_weights(sc)
-	author_feature.saveAsHadoopFile('/user/bd-ss16-g3/data/authors_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
-
+	#author_feature = authors_weights(sc)
+	#author_feature.saveAsHadoopFile('/user/bd-ss16-g3/data/authors_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 	#step5 give affiliations weight based on number of citations 
-	affiliation_feature = affiliations_weights(sc)
-	affiliation_feature.saveAsHadoopFile('/user/bd-ss16-g3/data/affiliation_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
-
+	#affiliation_feature = affiliations_weights(sc)
+	#affiliation_feature.saveAsHadoopFile('/user/bd-ss16-g3/data/affiliation_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 	#step6 give conferences weight based on number of citations
-	confs = conf_weights(sc)
-	confs.saveAsHadoopFile('/user/bd-ss16-g3/data/confs_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
-
+	#confs = conf_weights(sc)
+	#confs.saveAsHadoopFile('/user/bd-ss16-g3/data/confs_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 	#step7 give fos weight based on number of citations
 	fos = fos_weights(sc)
 	fos.saveAsHadoopFile('/user/bd-ss16-g3/data/fos_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
@@ -318,12 +314,12 @@ if __name__ == "__main__":
 
 	#step1
 	#Extract weights for the features
-	#extract_features(sc, 2012)
+	extract_features(sc, 2012)
 
 	#step2
 	#build feature file
-	convert_papers_to_feature_file(sc)
+	#convert_papers_to_feature_file(sc)
 
 	#step3
 	#merge featurs files into one
-	merge_features_files(sc)
+	#merge_features_files(sc)
