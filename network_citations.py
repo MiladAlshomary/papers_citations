@@ -284,7 +284,7 @@ def merge_features_files(sc):
 	print("============ 4 ================")
 	stage4 = stage3.leftOuterJoin(fos)
 
-	stage4.take(1)
+	print("ddddddddddd:" + str(stage4.take(1)))
 	#result = authors.join(affiliations)
 	#result.saveAsHadoopFile('/user/bd-ss16-g3/data/features_file', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
