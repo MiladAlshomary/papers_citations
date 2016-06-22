@@ -327,7 +327,7 @@ def extract_features(sc, year):
 
 def learn_model(sc):
 	feature_file = sc.textFile("/user/bd-ss16-g3/data/features_file").map(lambda l:l.split("\t"))
-	feature_file = feature_file.map(lambda f: [f[0], float(0 if f[1] == 'None' else f[1]), float(0 if f[2] == 'None' else f[2]), float(0 if f[3] == 'None' else f[3]), float(0 if f[4] == 'None' else f[4]), float(0 if f[5] == 'None' else f[5])])
+	feature_file = feature_file.map(lambda f: [f[0], float(0 if f[1] == 'None' else f[1]), float(0 if f[2] == 'None' else f[2]), float(0 if f[3] == 'None' else f[3]), float(0 if f[4] == 'None' else f[4]), float(0 if f[5] == 'None' else f[5])]).filter(lambda f: f[1] > 0)
 
 	labeled_points = feature_file.map(lambda f: LabeledPoint(f[1], f[2:]))
 	training, testing = labeled_points.randomSplit([0.7,0.3],11)
