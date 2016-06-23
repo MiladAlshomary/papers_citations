@@ -348,6 +348,7 @@ def learn_model(sc):
 		MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
 		print("MSE = " + str(MSE))
 		iterations = iterations +100
+		index = index +1
 
 	
 	return model
