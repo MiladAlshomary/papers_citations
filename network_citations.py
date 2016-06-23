@@ -346,7 +346,7 @@ def learn_model(sc):
 		model = LinearRegressionWithSGD.train(training, iterations=iterations, step=0.1)
 		preds = testing.map(lambda p: (p.label, model.predict(p.features)))
 		MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
-		print("MSE = " + str(MSE))
+		print("========== MSE = " + str(MSE))
 		iterations = iterations +100
 		index = index +1
 
