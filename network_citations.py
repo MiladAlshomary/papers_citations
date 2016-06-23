@@ -1,6 +1,7 @@
 ## Imports
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint, LinearRegressionWithSGD, LinearRegressionModel
+from pyspark.mllib.feature import Normalizer
 
 ## CONSTANTS
 APP_NAME = "Network Citations"
@@ -273,7 +274,7 @@ def merge_features_files(sc):
 
 	authors = sc.textFile("/user/bd-ss16-g3/data/papers_authors_weight").map(lambda line: line.split("\t")).map(lambda i: (i[0], i[1]))
 	affiliations = sc.textFile("/user/bd-ss16-g3/data/papers_affiliation_weight").map(lambda line: line.split("\t")).map(lambda i: (i[0], i[1]))
-	fos = sc.textFile("/user/bd-ss16-g3/data/papers_fosn_weight").map(lambda line: line.split("\t"))	.map(lambda i: (i[0], i[1]))
+	fos = sc.textFile("/user/bd-ss16-g3/data/papers_fosn_weight").map(lambda line: line.split("\t")).map(lambda i: (i[0], i[1]))
 	conferences = sc.textFile("/user/bd-ss16-g3/data/papers_conferences_weight").map(lambda line: line.split("\t")).map(lambda i: (i[0], i[1]))
 
 	stage1 = papers.leftOuterJoin(authors)
@@ -281,8 +282,7 @@ def merge_features_files(sc):
 	stage3 = stage2.leftOuterJoin(conferences)
 	stage4 = stage3.leftOuterJoin(fos)
 
-	('808B8671', ((((3.0, '2.25'), '19267.0'), '32.0'), '13052.0'))
-
+	#('808B8671', ((((3.0, '2.25'), '19267.0'), '32.0'), '13052.0'))
 	#paper_id, nb_citations, fos, conf, aff, author
 	stage4 = stage4.map(lambda p: (p[0],p[1][1], p[1][0][1], p[1][0][0][1], p[1][0][0][0][1], p[1][0][0][0][0]))
 	stage4 = stage4.map(lambda p: (p[0], '\t'.join([str(p[1]),str(p[2]), str(p[3]), str(p[4]), str(p[5])])))
@@ -329,13 +329,27 @@ def learn_model(sc):
 	feature_file = sc.textFile("/user/bd-ss16-g3/data/features_file").map(lambda l:l.split("\t"))
 	feature_file = feature_file.map(lambda f: [f[0], float(0 if f[1] == 'None' else f[1]), float(0 if f[2] == 'None' else f[2]), float(0 if f[3] == 'None' else f[3]), float(0 if f[4] == 'None' else f[4]), float(0 if f[5] == 'None' else f[5])]).filter(lambda f: f[1] > 0)
 
-	labeled_points = feature_file.map(lambda f: LabeledPoint(f[1], f[2:]))
-	training, testing = labeled_points.randomSplit([0.7,0.3],11)
-	model = LinearRegressionWithSGD.train(training, iterations=100, step=0.00000001)
+	points = feature_file.map(lambda f: LabeledPoint(f[1], f[2:]))
+	
+	#normalizing
+	nor      = Normalizer()
+	labels   = points.map(lambda x: x.label)
+	features = points.map(lambda x: x.features)
+	
+	normalized_points = labels.zip(nor.transform(features))
+	normalized_points = normalized_points.map(lambda i: LabeledPoint(i[0], i[1]))
 
-	preds = testing.map(lambda p: (p.label, model.predict(p.features)))
-	MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
-	print("MSE = " + str(MSE))
+	training, testing = normalized_points.randomSplit([0.7,0.3],11)
+	index = 0
+	iterations = 1000;
+	while(index < 10):
+		model = LinearRegressionWithSGD.train(training, iterations=100, step=0.1)
+		preds = testing.map(lambda p: (p.label, model.predict(p.features)))
+		MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
+		print("MSE = " + str(MSE))
+		iterations = iterations +100
+
+	
 	return model
 
 if __name__ == "__main__":
@@ -360,4 +374,4 @@ if __name__ == "__main__":
 	#step4
 	#learn a linear model from the feature file
 	model = learn_model(sc)
-	model.save(sc,'/user/bd-ss16-g3/data/my_model')
+	#model.save(sc,'/user/bd-ss16-g3/data/my_model')
