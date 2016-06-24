@@ -36,8 +36,7 @@ def get_papers_of(sc, year):
 
 def get_citations_on_papers_of(sc, year):
 	#papers and number of citations per year
-	citations = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperReferences.tsv.bz2")
-	citations = citations.map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
+	citations = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperReferences.tsv.bz2").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
 
 	papers = get_papers_of(sc, year)
 	papers = papers.map(lambda p: (p[0], p[3]))
@@ -353,6 +352,13 @@ def learn_model(sc):
 	
 	return model
 
+def test(sc):
+	#citations = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperReferences.tsv.bz2").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
+	papers_c  = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
+	papers_i    = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/Papers.tsv.bz2").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[3]))
+	result = papers_c.join(papers_i)
+	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year")
+
 if __name__ == "__main__":
 	# Configure OPTIONS
 	conf = SparkConf().setAppName(APP_NAME)
@@ -360,6 +366,7 @@ if __name__ == "__main__":
 	conf = conf.set("spark.executor.memory", "25g").set("spark.driver.memory", "25g").set("spark.mesos.executor.memoryOverhead", "10000")
 	sc   = SparkContext(conf=conf)
 
+	test(sc)
 	#step1
 	#Extract weights for the features
 	#extract_features(sc, 2012)
@@ -374,5 +381,5 @@ if __name__ == "__main__":
 
 	#step4
 	#learn a linear model from the feature file
-	model = learn_model(sc)
+	#model = learn_model(sc)
 	#model.save(sc,'/user/bd-ss16-g3/data/my_model')
