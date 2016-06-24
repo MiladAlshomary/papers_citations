@@ -359,11 +359,17 @@ def test(sc):
 	#result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1]])))
 	#result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
-	citations = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperReferences.tsv.bz2").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
+	# citations = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperReferences.tsv.bz2").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
+	# papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[2]))
+	# result = papers.join(citations)
+	# result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1]])))
+	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_1", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+	citations_1 = sc.textFile("/user/bd-ss16-g3/data_all/citations_1").map(lambda line : line.split("\t")).map(lambda c: (c[2], (c[0], c[1])))
 	papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[2]))
-	result = papers.join(citations)
-	result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1]])))
-	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_1", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	result = papers.join(citations_1)
+	result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1][0], r[1][1][1]])))
+	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_2", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
 	# Configure OPTIONS
