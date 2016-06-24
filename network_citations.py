@@ -357,6 +357,7 @@ def test(sc):
 	papers_c  = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
 	papers_i    = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/Papers.tsv.bz2").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[3]))
 	result = papers_c.join(papers_i)
+	result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1]])))
 	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
