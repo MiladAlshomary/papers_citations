@@ -380,7 +380,7 @@ def test(sc):
 	all_papers   = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
 	all_papers.leftOuterJoin(cited_papers)
 	#update all papers nb citations from cited_papers
-	all_papers = all_papers.map(lambda p: (p[0], p[1][1])).map(lambda p: (p[0], 0 if p[1] = None else p[1]))
+	all_papers = all_papers.map(lambda p: (p[0], p[1][1])).map(lambda p: (p[0], 0 if p[1] == None else p[1]))
 	all_papers.saveAsHadoopFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
