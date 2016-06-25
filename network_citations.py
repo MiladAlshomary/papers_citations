@@ -391,6 +391,7 @@ def test(sc):
 	result = result.map(lambda i: (i[1][0][0], 0 if i[1][1] == None else (i[1][0][1] * i[1][1]) ))
 	#reduce by combining
 	result = result.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
+	result = result.map(lambda item: (item[0], item[1][0]/item[1][1]))
 	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/authors_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
