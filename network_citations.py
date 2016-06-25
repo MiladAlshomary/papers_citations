@@ -365,11 +365,23 @@ def test(sc):
 	# result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1]])))
 	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_1", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
-	citations_1 = sc.textFile("/user/bd-ss16-g3/data_all/citations_1").map(lambda line : line.split("\t")).map(lambda c: (c[2], (c[0], c[1])))
-	papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[2]))
-	result = papers.join(citations_1)
-	result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1][0], r[1][1][1]])))
-	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_2", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	# citations_1 = sc.textFile("/user/bd-ss16-g3/data_all/citations_1").map(lambda line : line.split("\t")).map(lambda c: (c[2], (c[0], c[1])))
+	# papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[2]))
+	# result = papers.join(citations_1)
+	# result = result.map(lambda r: (r[0], '\t'.join([r[1][0], r[1][1][0], r[1][1][1]])))
+	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_2", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+	# citations_2 = sc.textFile("/user/bd-ss16-g3/data_all/citations_2").map(lambda line : line.split("\t"))
+	# c3years = citations_2.filter(lambda c: (int(c[3]) - int(c[1])) == 3).map(lambda c: (c[0], c[2]))
+	# c3years.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_3years_old", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+	citations3years = sc.textFile("/user/bd-ss16-g3/data_all/citations_3years_old").map(lambda line : line.split("\t"))
+	cited_papers = citations.map(lambda l: (l[1], 1)).reduceByKey(lambda a,b: a+b)
+	all_papers   = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
+	all_papers.leftOuterJoin(cited_papers)
+	#update all papers nb citations from cited_papers
+	all_papers = all_papers.map(lambda p: (p[0], p[1][1])).map(lambda p: (p[0], 0 if p[1] = None else p[1]))
+	all_papers.saveAsHadoopFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
 	# Configure OPTIONS
