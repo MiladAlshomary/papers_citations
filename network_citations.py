@@ -376,7 +376,7 @@ def test(sc):
 	# c3years.saveAsHadoopFile("/user/bd-ss16-g3/data_all/citations_3years_old", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	citations3years = sc.textFile("/user/bd-ss16-g3/data_all/citations_3years_old").map(lambda line : line.split("\t"))
-	cited_papers = citations.map(lambda l: (l[1], 1)).reduceByKey(lambda a,b: a+b)
+	cited_papers = citations3years.map(lambda l: (l[1], 1)).reduceByKey(lambda a,b: a+b)
 	all_papers   = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c").map(lambda line : line.split("\t")).map(lambda c: (c[0], c[1]))
 	all_papers.leftOuterJoin(cited_papers)
 	#update all papers nb citations from cited_papers
