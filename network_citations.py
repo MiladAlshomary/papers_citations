@@ -388,8 +388,6 @@ def test(sc):
 	paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
 	paa = paa.map(lambda p: (p[0], (p[1], 1/float(p[5]))))
 	result = paa.join(all_papers)
-	print(result.take(1))
-	exit()
 	result = result.map(lambda i: (i[1][0][0], 0 if i[1][1] == None else (i[1][0][1] * i[1][1]) ))
 	#reduce by combining
 	result = result.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
