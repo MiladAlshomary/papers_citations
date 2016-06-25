@@ -401,7 +401,7 @@ def test(sc):
 
 	#join with authors
 	authors_f = sc.textFile("/user/bd-ss16-g3/data_all/authors_weights").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
-	result = paa.join(authors_f).map(lambda r: (p[1][0], 0 if p[1][1] == None else p[1][1]))
+	result = paa.join(authors_f).map(lambda p: (p[1][0], 0 if p[1][1] == None else p[1][1]))
 	#sum up weights 
 	result = result.reduceByKey(lambda a,b: a+b)
 	#join with papers
