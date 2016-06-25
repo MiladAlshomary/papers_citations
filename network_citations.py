@@ -402,10 +402,12 @@ def test(sc):
 	#join with authors
 	authors_f = sc.textFile("/user/bd-ss16-g3/data_all/authors_weights").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
 	result = paa.join(authors_f).map(lambda r: (p[0], 0 if p[1][1] == None else p[1][1]))
+	print(result.take(1))
+	exit()
 	#join with papers
 	papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
 	result2 = papers.join(result).map(lambda r: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
-	print(result2.take(5))
+
 	#result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
