@@ -406,7 +406,7 @@ def test(sc):
 	result = result.reduceByKey(lambda a,b: a+b)
 	#join with papers
 	papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
-	result2 = papers.join(result).map(lambda r: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
+	result2 = papers.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
 	result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
