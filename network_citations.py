@@ -386,7 +386,7 @@ def test(sc):
 	#author feature
 	all_papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], p[1]))
 	paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
-	paa = paa.map(lambda p: (p[0], (p[1], 1/float(l[5]))))
+	paa = paa.map(lambda p: (p[0], (p[1], 1/float(p[5]))))
 	result = paa.join(all_papers)
 	result = result.map(lambda i: (i[1][0][0], 0 if i[1][1] == None else (i[1][0][1] * i[1][1]) ))
 	#reduce by combining
