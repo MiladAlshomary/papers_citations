@@ -418,16 +418,16 @@ def test(sc):
 
 
 	#conf feature
-	papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
-	papers = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/Papers.tsv.bz2").map(lambda p: p.split("\t")).map(lambda p: (p[0], p[5]))
+	# papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
+	# papers = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/Papers.tsv.bz2").map(lambda p: p.split("\t")).map(lambda p: (p[0], p[5]))
 
-	result   = papers_citations.join(papers)
-	result   = result.map(lambda i: (i[1][1], float(i[1][0])))
+	# result   = papers_citations.join(papers)
+	# result   = result.map(lambda i: (i[1][1], float(i[1][0])))
 	
-	#reduce by combining
-	result = result.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
-	result = result.map(lambda item: (item[0], item[1][0]/item[1][1]))
-	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/confs_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	# #reduce by combining
+	# result = result.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
+	# result = result.map(lambda item: (item[0], item[1][0]/item[1][1]))
+	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/confs_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#Learning ============= papers + authors ================
 	# paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
@@ -472,6 +472,19 @@ def test(sc):
 	# result2 = papers_citations.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
 	# result2 = result2.map(lambda x: (x[0], '\t'.join([str(x[1]), str(x[2])])))
 	# result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+	#Learning ============= papers + confs ================
+	papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
+	confs_papers = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/Papers.tsv.bz2").map(lambda p: p.split("\t")).map(lambda p: (p[5], p[0]))
+	confs_weights = sc.textFile("/user/bd-ss16-g3/data_all/confs_weights").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
+	#join with authors
+	result = confs_papers.join(confs_weights).map(lambda p: (p[1][0], 0 if p[1][1] == None else p[1][1]))
+	#sum up weights 
+	result = result.reduceByKey(lambda a,b: a+b)
+	#join with papers
+	result2 = papers_citations.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
+	result2 = result2.map(lambda x: (x[0], '\t'.join([str(x[1]), str(x[2])])))
+	result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
 	# Configure OPTIONS
