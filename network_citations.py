@@ -324,32 +324,38 @@ def extract_features(sc, year):
 	fos = fos_weights(sc)
 	fos.saveAsHadoopFile('/user/bd-ss16-g3/data/fos_citations', "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
-def learn_model(sc):
-	feature_file = sc.textFile("/user/bd-ss16-g3/data/features_file").map(lambda l:l.split("\t"))
-	feature_file = feature_file.map(lambda f: [f[0], float(0 if f[1] == 'None' else f[1]), float(0 if f[2] == 'None' else f[2]), float(0 if f[3] == 'None' else f[3]), float(0 if f[4] == 'None' else f[4]), float(0 if f[5] == 'None' else f[5])]).filter(lambda f: f[1] > 0)
+def learn_model(sc, file_path, normalize):
+	feature_file = sc.textFile(file_path).map(lambda l:l.split("\t"))
 
 	points = feature_file.map(lambda f: LabeledPoint(f[1], f[2:]))
 	
 	#normalizing
-	nor      = Normalizer()
-	labels   = points.map(lambda x: x.label)
-	features = points.map(lambda x: x.features)
-	
-	normalized_points = labels.zip(nor.transform(features))
-	normalized_points = normalized_points.map(lambda i: LabeledPoint(i[0], i[1]))
+	if normalize:
+		nor      = Normalizer()
+		labels   = points.map(lambda x: x.label)
+		features = points.map(lambda x: x.features)
+		points = labels.zip(nor.transform(features))
+		points = normalized_points.map(lambda i: LabeledPoint(i[0], i[1]))
 
-	training, testing = normalized_points.randomSplit([0.7,0.3],11)
+	training, testing = points.randomSplit([0.7,0.3],11)
 	index = 0
-	iterations = 1000;
-	while(index < 10):
-		model = LinearRegressionWithSGD.train(training, iterations=iterations, step=0.1)
+	iterations = 100
+	p_mse = -1
+	converge = False
+	result = {}
+	while(!converge):
+		model = LinearRegressionWithSGD.train(training, iterations=iterations, step=0.00001,intercept=True,regType="l1")
 		preds = testing.map(lambda p: (p.label, model.predict(p.features)))
 		MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
 		print("========== MSE = " + str(MSE))
-		iterations = iterations +100
-		index = index +1
+		if p_mse == MSE
+			converge = True
 
+		iterations = iterations +100
+		result[iterations] = MSE
+		p_mse = MSE
 	
+	print(result)
 	return model
 
 def test(sc):
@@ -474,17 +480,28 @@ def test(sc):
 	# result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#Learning ============= papers + confs ================
-	papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
-	confs_papers = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/Papers.tsv.bz2").map(lambda p: p.split("\t")).map(lambda p: (p[5], p[0]))
-	confs_weights = sc.textFile("/user/bd-ss16-g3/data_all/confs_weights").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
-	#join with authors
-	result = confs_papers.join(confs_weights).map(lambda p: (p[1][0], 0 if p[1][1] == None else p[1][1]))
-	#sum up weights 
-	result = result.reduceByKey(lambda a,b: a+b)
-	#join with papers
-	result2 = papers_citations.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
-	result2 = result2.map(lambda x: (x[0], '\t'.join([str(x[1]), str(x[2])])))
-	result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	# papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
+	# confs_papers = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/Papers.tsv.bz2").map(lambda p: p.split("\t")).map(lambda p: (p[5], p[0]))
+	# confs_weights = sc.textFile("/user/bd-ss16-g3/data_all/confs_weights").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
+	# #join with authors
+	# result = confs_papers.join(confs_weights).map(lambda p: (p[1][0], 0 if p[1][1] == None else p[1][1]))
+	# #sum up weights 
+	# result = result.reduceByKey(lambda a,b: a+b)
+	# #join with papers
+	# result2 = papers_citations.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
+	# result2 = result2.map(lambda x: (x[0], '\t'.join([str(x[1]), str(x[2])])))
+	# result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+	#merge all features together
+	#papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
+	author_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
+	affiliation_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_affiliations_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
+	fos_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
+	conf_feature  = sc.textFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
+	
+	result = author_feature.join(affiliation_feature).join(fos_feature).join(conf_feature)
+	result.take(1)
+	
 
 if __name__ == "__main__":
 	# Configure OPTIONS
