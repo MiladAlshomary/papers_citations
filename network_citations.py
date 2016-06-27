@@ -348,7 +348,7 @@ def learn_model(sc, file_path, normalize):
 		preds = testing.map(lambda p: (p.label, model.predict(p.features)))
 		MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
 		print("========== MSE = " + str(MSE))
-		if p_mse == MSE
+		if p_mse == MSE:
 			converge = True
 
 		iterations = iterations +100
