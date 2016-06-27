@@ -343,7 +343,7 @@ def learn_model(sc, file_path, normalize):
 	p_mse = -1
 	converge = False
 	result = {}
-	while(!converge):
+	while(not converge):
 		model = LinearRegressionWithSGD.train(training, iterations=iterations, step=0.00001,intercept=True,regType="l1")
 		preds = testing.map(lambda p: (p.label, model.predict(p.features)))
 		MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
@@ -500,8 +500,8 @@ def test(sc):
 	conf_feature  = sc.textFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
 	
 	result = author_feature.join(affiliation_feature).join(fos_feature).join(conf_feature)
-	result.take(1)
-	
+	print(result.take(1))
+
 
 if __name__ == "__main__":
 	# Configure OPTIONS
