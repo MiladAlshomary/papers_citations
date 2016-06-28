@@ -494,10 +494,10 @@ def test(sc):
 
 	#merge all features together
 	#papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
-	author_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
-	affiliation_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_affiliations_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
-	fos_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
-	conf_feature  = sc.textFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
+	author_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
+	affiliation_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_affiliations_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
+	fos_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
+	conf_feature  = sc.textFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
 	
 	result = author_feature.join(affiliation_feature)
 	result.cache()
