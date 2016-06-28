@@ -502,6 +502,8 @@ def test(sc):
 	result = author_feature.join(affiliation_feature)
 	result.cache()
 	result = result.join(fos_feature)
+	result.cache()
+	result = result.join(conf_feature)
 	print(result.take(1))
 
 
