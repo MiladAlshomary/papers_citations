@@ -504,6 +504,12 @@ def test(sc):
 	result = result.join(fos_feature)
 	result.cache()
 	result = result.join(conf_feature)
+
+	#paper_id, nb_citations, author_weight, affiliation_w, fos_weight, conf_weight
+	result = result.map(lambda x: (x[0], x[1][0][0][0][0], x[1][0][0][0][1], x[1][0][0][1], x[1][0][1], x[1][1]))
+	result = result.map(lambda x: (x[0], '\t'.join([1:])))
+	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_all_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
 	print(result.take(1))
 
 
