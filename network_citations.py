@@ -499,7 +499,9 @@ def test(sc):
 	fos_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
 	conf_feature  = sc.textFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1]), float(p[2])))
 	
-	result = author_feature.join(affiliation_feature).join(fos_feature).join(conf_feature)
+	result = author_feature.join(affiliation_feature)
+	result.cache()
+	result = result.join(fos_feature)
 	print(result.take(1))
 
 
