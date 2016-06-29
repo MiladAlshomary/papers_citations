@@ -2,6 +2,7 @@
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint, LinearRegressionWithSGD, LinearRegressionModel
 from pyspark.mllib.feature import Normalizer
+import time 
 
 ## CONSTANTS
 APP_NAME = "Network Citations"
@@ -344,7 +345,10 @@ def learn_model(sc, file_path, normalize):
 	converge = False
 	result = {}
 	while(not converge):
+		x = time.clock()
 		model = LinearRegressionWithSGD.train(training, iterations=iterations, step=0.00001,intercept=True,regType="l1")
+		y = time.clock()
+		print("========== time = " + str(y - x))
 		preds = testing.map(lambda p: (p.label, model.predict(p.features)))
 		MSE = preds.map(lambda r: (r[1] - r[0])**2).reduce(lambda x, y: x + y) / preds.count()
 		print("========== MSE = " + str(MSE))
