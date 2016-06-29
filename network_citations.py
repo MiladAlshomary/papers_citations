@@ -335,7 +335,7 @@ def learn_model(sc, file_path, normalize):
 		labels   = points.map(lambda x: x.label)
 		features = points.map(lambda x: x.features)
 		points = labels.zip(nor.transform(features))
-		points = normalized_points.map(lambda i: LabeledPoint(i[0], i[1]))
+		points = points.map(lambda i: LabeledPoint(i[0], i[1]))
 
 	training, testing = points.randomSplit([0.7,0.3],11)
 	index = 0
@@ -520,7 +520,10 @@ if __name__ == "__main__":
 	conf = conf.set("spark.executor.memory", "25g").set("spark.driver.memory", "25g").set("spark.mesos.executor.memoryOverhead", "10000")
 	sc   = SparkContext(conf=conf)
 
-	test(sc)
+	#test(sc)
+	model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_author_weight_citations", False)
+	model.save(sc,'/user/bd-ss16-g3/data_all/author_model')
+
 	#step1
 	#Extract weights for the features
 	#extract_features(sc, 2012)
@@ -537,3 +540,4 @@ if __name__ == "__main__":
 	#learn a linear model from the feature file
 	#model = learn_model(sc)
 	#model.save(sc,'/user/bd-ss16-g3/data/my_model')
+
