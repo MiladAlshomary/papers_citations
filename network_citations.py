@@ -525,8 +525,11 @@ if __name__ == "__main__":
 	sc   = SparkContext(conf=conf)
 
 	#test(sc)
-	model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_author_weight_citations", False)
-	model.save(sc,'/user/bd-ss16-g3/data_all/author_model')
+	# model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_author_weight_citations", False)
+	# model.save(sc,'/user/bd-ss16-g3/data_all/author_model')
+
+	model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_affiliations_weight_citations", False)
+	model.save(sc,'/user/bd-ss16-g3/data_all/affiliation_model')
 
 	#step1
 	#Extract weights for the features
