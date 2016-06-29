@@ -529,7 +529,7 @@ if __name__ == "__main__":
 	# model.save(sc,'/user/bd-ss16-g3/data_all/author_model')
 
 	model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_fos_weight_citations", False)
-	model.save(sc,'/user/bd-ss16-g3/data_all/fos_model')
+	model.save(sc,'/user/bd-ss16-g3/data_all/paper_all_weights')
 
 	#step1
 	#Extract weights for the features
