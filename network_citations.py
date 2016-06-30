@@ -394,15 +394,15 @@ def test(sc):
 	# all_papers.saveAsHadoopFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#author feature
-	# all_papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
-	# paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
-	# paa = paa.map(lambda p: (p[0], (p[1], 1/float(p[5]))))
-	# result = paa.join(all_papers)
-	# result = result.map(lambda i: (i[1][0][0], 0 if i[1][1] == None else (i[1][0][1] * i[1][1]) ))
-	# #reduce by combining
-	# result = result.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
-	# result = result.map(lambda item: (item[0], item[1][0]/item[1][1]))
-	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/authors_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	all_papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
+	paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
+	paa = paa.map(lambda p: (p[0], (p[1], 1)))
+	result = paa.join(all_papers)
+	result = result.map(lambda i: (i[1][0][0], 0 if i[1][1] == None else (i[1][0][1] * i[1][1]) ))
+	#reduce by combining
+	result = result.combineByKey(lambda value: (value, 1),lambda x, value: (x[0] + value, x[1] + 1),lambda x, y: (x[0] + y[0], x[1] + y[1]))
+	result = result.map(lambda item: (item[0], item[1][0]/item[1][1]))
+	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/authors_weights_1", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#affiliation feature
 	# all_papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
@@ -498,23 +498,23 @@ def test(sc):
 
 	#merge all features together
 	#papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_3years_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[1])))
-	author_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
-	affiliation_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_affiliations_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
-	fos_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
-	conf_feature  = sc.textFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
+	# author_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
+	# affiliation_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_affiliations_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
+	# fos_feature   = sc.textFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
+	# conf_feature  = sc.textFile("/user/bd-ss16-g3/data_all/paper_conf_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], float(p[2])))
 	
-	result = author_feature.join(affiliation_feature)
-	result.cache()
-	result = result.join(fos_feature)
-	result.cache()
-	result = result.join(conf_feature)
+	# result = author_feature.join(affiliation_feature)
+	# result.cache()
+	# result = result.join(fos_feature)
+	# result.cache()
+	# result = result.join(conf_feature)
 
-	#paper_id, nb_citations, author_weight, affiliation_w, fos_weight, conf_weight
-	result = result.map(lambda x: (x[0], str(x[1][0][0][0][0]), str(x[1][0][0][0][1]), str(x[1][0][0][1]), str(x[1][0][1]), str(x[1][1])))
-	result = result.map(lambda x: (x[0], '\t'.join(x[1:])))
-	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_all_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	# #paper_id, nb_citations, author_weight, affiliation_w, fos_weight, conf_weight
+	# result = result.map(lambda x: (x[0], str(x[1][0][0][0][0]), str(x[1][0][0][0][1]), str(x[1][0][0][1]), str(x[1][0][1]), str(x[1][1])))
+	# result = result.map(lambda x: (x[0], '\t'.join(x[1:])))
+	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_all_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
-	print(result.take(1))
+	# print(result.take(1))
 
 
 if __name__ == "__main__":
@@ -524,12 +524,12 @@ if __name__ == "__main__":
 	conf = conf.set("spark.executor.memory", "25g").set("spark.driver.memory", "25g").set("spark.mesos.executor.memoryOverhead", "10000")
 	sc   = SparkContext(conf=conf)
 
-	#test(sc)
+	test(sc)
 	# model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_author_weight_citations", False)
 	# model.save(sc,'/user/bd-ss16-g3/data_all/author_model')
 
-	model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_fos_weight_citations", False)
-	model.save(sc,'/user/bd-ss16-g3/data_all/paper_all_weights')
+	#model = learn_model(sc, "/user/bd-ss16-g3/data_all/paper_fos_weight_citations", False)
+	#model.save(sc,'/user/bd-ss16-g3/data_all/paper_all_weights')
 
 	#step1
 	#Extract weights for the features
