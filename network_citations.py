@@ -474,12 +474,12 @@ def test(sc):
 	papers_citations = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
 	fos_weights = sc.textFile("/user/bd-ss16-g3/data_all/fos_weights").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
 
-	#join with authors
+	#join with
 	result = fos_papers.leftOuterJoin(fos_weights).map(lambda p: (p[1][0], 0 if p[1][1] == None else p[1][1]))
 	#sum up weights 
 	result = result.reduceByKey(lambda a,b: a+b)
 	#join with papers
-	result2 = papers_citations.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
+	result2 = papers_citations.leftOuterJoin(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
 	result2 = result2.map(lambda x: (x[0], '\t'.join([str(x[1]), str(x[2])])))
 	result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_fos_weight_citations", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
