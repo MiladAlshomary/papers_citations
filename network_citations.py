@@ -516,6 +516,12 @@ def test(sc):
 
 	# print(result.take(1))
 
+	author_feature_1   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
+	author_feature_2   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations_1").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
+	result = author_feature_1.join(author_feature_2)
+	result = result.map(lambda x: (x[0], str(x[1][0][0]), str(x[1][0][1]), str(x[1][1][1])))
+	result = result.map(lambda x: (x[0], '\t'.join(x[1:])))
+	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/author_feature_3", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 if __name__ == "__main__":
 	# Configure OPTIONS
