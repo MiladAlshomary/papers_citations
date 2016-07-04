@@ -440,19 +440,19 @@ def test(sc):
 	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/confs_weights", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#Learning ============= papers + authors ================
-	# paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
-	# paa = paa.map(lambda p: (p[1], p[0]))
+	paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[1] != '')
+	paa = paa.map(lambda p: (p[1], p[0]))
 
-	# #join with authors
-	# authors_f = sc.textFile("/user/bd-ss16-g3/data_all/authors_weights").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
-	# result = paa.join(authors_f).map(lambda p: (p[1][0], 0 if p[1][1] == None else p[1][1]))
-	# #sum up weights 
-	# result = result.reduceByKey(lambda a,b: a+b)
-	# #join with papers
-	# papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
-	# result2 = papers.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
-	# result2 = result2.map(lambda x: (x[0], '\t'.join([str(x[1]), str(x[2])])))
-	# result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations_1", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	#join with authors
+	authors_f = sc.textFile("/user/bd-ss16-g3/data_all/author_weight_3").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
+	result = paa.join(authors_f).map(lambda p: (p[1][0], 0 if p[1][1] == None else p[1][1]))
+	#sum up weights 
+	result = result.reduceByKey(lambda a,b: a+b)
+	#join with papers
+	papers = sc.textFile("/user/bd-ss16-g3/data_all/papers_citations_less_200c_year").map(lambda a: a.split("\t")).map(lambda a: (a[0], float(a[1])))
+	result2 = papers.join(result).map(lambda p: (p[0], p[1][0], 0 if p[1][1] == None else p[1][1]))
+	result2 = result2.map(lambda x: (x[0], '\t'.join([str(x[1]), str(x[2])])))
+	result2.saveAsHadoopFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations_3", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
 
 	#Learning ============= papers + affiliations ================
 	# paa = sc.textFile("/corpora/corpus-microsoft-academic-graph/data/PaperAuthorAffiliations.tsv.bz2").map(lambda l : l.split("\t")).filter(lambda a : a[2] != '')
@@ -516,12 +516,15 @@ def test(sc):
 
 	# print(result.take(1))
 
-	author_feature_1   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
-	author_feature_2   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations_1").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
-	result = author_feature_1.join(author_feature_2)
-	result = result.map(lambda x: (x[0], str(x[1][0][0]), str(x[1][0][1]), str(x[1][1][1])))
-	result = result.map(lambda x: (x[0], '\t'.join(x[1:])))
-	result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/author_feature_3", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+	# author_feature_1   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
+	# author_feature_2   = sc.textFile("/user/bd-ss16-g3/data_all/paper_author_weight_citations_1").map(lambda p: p.split("\t")).map(lambda p: (p[0], (float(p[1]), float(p[2]))))
+	# result = author_feature_1.join(author_feature_2)
+	# result = result.map(lambda x: (x[0], str(x[1][0][0]), str(x[1][0][1]), str(x[1][1][1])))
+	# result = result.map(lambda x: (x[0], '\t'.join(x[1:])))
+	# result.saveAsHadoopFile("/user/bd-ss16-g3/data_all/author_feature_3", "org.apache.hadoop.mapred.TextOutputFormat", compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+
+
 
 if __name__ == "__main__":
 	# Configure OPTIONS
